@@ -18,20 +18,23 @@ import frc.robot.subsystems.*;
  * subsystems, commands, and button mappings) should be declared here.
  */
 public class RobotContainer {
-    /* Controllers */
-    private final Joystick driver = new Joystick(0);
 
-    /* Drive Controls */
-    private final int translationAxis = XboxController.Axis.kLeftY.value;
-    private final int strafeAxis = XboxController.Axis.kLeftX.value;
-    private final int rotationAxis = XboxController.Axis.kRightX.value;
+    private final DriveControls driveControls = new DriveControls();
+    /* Controllers */
+    // private final Joystick driver = new Joystick(0);
+
+    // /* Drive Controls */
+    // private final int translationAxis = XboxController.Axis.kLeftY.value;
+    // private final int strafeAxis = XboxController.Axis.kLeftX.value;
+    // private final int rotationAxis = XboxController.Axis.kRightX.value;
 
     /* Driver Buttons */
-    private final JoystickButton zeroGyro = new JoystickButton(driver, XboxController.Button.kY.value);
-    private final JoystickButton robotCentric = new JoystickButton(driver, XboxController.Button.kLeftBumper.value);
+    // private final JoystickButton zeroGyro = new JoystickButton(drive, XboxController.Button.kY.value);
+    // private final JoystickButton robotCentric = new JoystickButton(driver, XboxController.Button.kLeftBumper.value);
 
     /* Subsystems */
     private final Swerve s_Swerve = new Swerve();
+    private final Intake intake = new Intake();
 
 
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
@@ -39,13 +42,12 @@ public class RobotContainer {
         s_Swerve.setDefaultCommand(
             new TeleopSwerve(
                 s_Swerve, 
-                () -> -driver.getRawAxis(translationAxis), 
-                () -> -driver.getRawAxis(strafeAxis), 
-                () -> -driver.getRawAxis(rotationAxis), 
-                () -> robotCentric.getAsBoolean()
+                () -> -driveControls.getTranslation(), 
+                () -> -driveControls.getStrafe(), 
+                () -> -driveControls.getRotation(), 
+                () -> driveControls.roboCentric.getAsBoolean()
             )
         );
-
         // Configure the button bindings
         configureButtonBindings();
     }
@@ -58,7 +60,27 @@ public class RobotContainer {
      */
     private void configureButtonBindings() {
         /* Driver Buttons */
-        zeroGyro.onTrue(new InstantCommand(() -> s_Swerve.zeroHeading()));
+        driveControls.slowMode.whileTrue(
+            new TeleopSwerve(
+                s_Swerve, 
+                () -> driveControls.getTranslation() / 3, 
+                () -> driveControls.getStrafe() / 3, 
+                () -> driveControls.getRotation() / 3, 
+                () -> driveControls.roboCentric.getAsBoolean()
+            )
+        );
+        driveControls.fastMode.whileTrue(
+            new TeleopSwerve(
+                s_Swerve, 
+                () -> driveControls.getTranslation(), 
+                () -> driveControls.getStrafe(), 
+                () -> driveControls.getRotation(), 
+                () -> driveControls.roboCentric.getAsBoolean()
+            )
+        );    
+        driveControls.zeroGyro.onTrue(new InstantCommand(() -> s_Swerve.zeroHeading()));
+        driveControls.intakeDown.onTrue(new InstantCommand(() -> Intake.runIntake()));
+        //add more button bindingss here
     }
 
     /**
